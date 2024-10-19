@@ -1,14 +1,20 @@
 package te
 
-import "testing"
+import (
+	"fmt"
+	"testing"
+	"time"
+)
 
 func TestApp(t *testing.T) {
 	app := App()
-	app.Get("", []Middleware{}, func(req *Request, res *Response) {
-		res.Send("Hello")
-	})
 
 	if app == nil {
 		t.Error("Expected app to be created")
 	}
+
+	err := app.Listen()
+	fmt.Println("err=>", err)
+
+	time.Sleep(5000 * time.Second)
 }

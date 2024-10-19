@@ -3,6 +3,8 @@ package te
 import (
 	"fmt"
 	"net/http"
+	"strconv"
+	"time"
 )
 
 type Application struct {
@@ -42,10 +44,17 @@ func App(config ...AppConfig) *Application {
 		}
 	}
 
+	fmt.Println(serverConfig)
+
 	app := &Application{
 		config: serverConfig,
 		server: &http.Server{
-			Addr: serverConfig.Host + ":" + (string)(serverConfig.Port),
+			Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				fmt.Println("Processing request", r.URL.Path, " ", time.Now())
+				time.Sleep(5 * time.Second)
+				fmt.Println("Processing request", r.URL.Path, " ", time.Now())
+				fmt.Fprintln(w, "Response for", r.URL.Path)
+			}),
 		},
 	}
 
@@ -55,9 +64,14 @@ func App(config ...AppConfig) *Application {
 }
 
 func (app *Application) Listen(port ...int) error {
-	if len(port) > 0 && port[0] > 0 {
-		app.server.Addr = ":" + (string)(rune(port[0]))
+	if len(port) > 0 {
+		app.config.Port = port[0]
 	}
+
+	addr := app.config.Host + ":" + strconv.Itoa(app.config.Port)
+	app.server.Addr = addr
+
+	fmt.Println("Listening on", app.server.Addr)
 	return app.server.ListenAndServe()
 }
 
