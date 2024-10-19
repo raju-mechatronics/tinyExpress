@@ -3,7 +3,6 @@ package te
 import (
 	"fmt"
 	"testing"
-	"time"
 )
 
 func TestApp(t *testing.T) {
@@ -16,5 +15,4 @@ func TestApp(t *testing.T) {
 	err := app.Listen()
 	fmt.Println("err=>", err)
 
-	time.Sleep(5000 * time.Second)
 }

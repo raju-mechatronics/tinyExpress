@@ -45,3 +45,7 @@ const (
 	ERROR_MESSAGE_SERVICE_UNAVAILABLE   = "Service Unavailable"
 	ERROR_MESSAGE_GATEWAY_TIMEOUT       = "Gateway Timeout"
 )
+
+const (
+	ERROR_RESPONSE_ALREADY_SENT = "response already sent"
+)
