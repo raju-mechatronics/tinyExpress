@@ -8,22 +8,25 @@ import (
 )
 
 type Request struct {
-	http.Request
-	Method      string
-	URL         *url.URL
-	OriginalURL string
-	Path        string
-	Header      http.Header
-	Body        []byte
-	RemoteAddr  string
-	Params      map[string]string
-	Query       url.Values
-	Cookies     []*http.Cookie
-	Session     map[string]interface{}
-	Host        string
-	IP          string
-	Protocol    string
-	Secure      bool
+	*http.Request
+	Method       string
+	URL          *url.URL
+	OriginalURL  string
+	Path         string
+	CurrentPath  string
+	OriginalPath string
+	Header       http.Header
+	Body         []byte
+	RemoteAddr   string
+	Params       map[string]string
+	Query        url.Values
+	Cookies      []*http.Cookie
+	Session      map[string]interface{}
+	Host         string
+	IP           string
+	Protocol     string
+	Secure       bool
+	Next         *func()
 }
 
 // NewRequest initializes a new Request object

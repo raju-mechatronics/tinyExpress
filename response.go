@@ -13,8 +13,9 @@ type Response struct {
 	writer     *http.ResponseWriter
 }
 
-func NewResponse() *Response {
+func NewResponse(w *http.ResponseWriter) *Response {
 	return &Response{
 		resolved: false,
+		writer:   w,
 	}
 }

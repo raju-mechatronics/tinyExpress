@@ -1,78 +1,79 @@
 package te
 
-import "fmt"
+/*
+	ParamPath: /user/:id{int}/
+	ParamPath: /user/:id{string}
+	ParamPath: /user/:id{float}
+	ParamPath: /user/{regexp}
+	ParamPath: /user/:id{url}
+*/
+
+type PathHandler struct {
+	normalPath map[string]Resolver
+	paramPath  map[string]map[string]Resolver
+}
 
 /*
-	resolver interface extends the resolve method
-
-	will be implemented by the router struct and similar struct that needs to resolve the request
-*/
-type resolver interface {
-	resolve(req *Request, res *Response)
-}
-
-type routeMap map[string]resolver
-
-func (rmap *routeMap) addRoute(path string, resolver resolver) {
-	if (*rmap)[path] != nil {
-		fmt.Println("warn: the path already have a resolver")
-		return
-	}
-	(*rmap)[path] = resolver
-}
-
-func (rmap routeMap) getRoute(path string) resolver {
-	var res resolver
-	if rmap[path] == nil {
-		return nil
-	}
-	res = rmap[path]
-	return res
-}
-
-type pathHandler struct {
-	requestHandler map[RequestType]routeMap
-}
-
-func (ph *pathHandler) resolve(req *Request, res *Response) resolver {
-	if res.resolved {
-		fmt.Println("warn: the response is resolve => please use return on next and res.send function call")
-		return nil
-	}
-
-	method := req.Method
-	var handler routeMap
-
-	if ph.requestHandler[method] == nil {
-		if ph.requestHandler[RequestTypeAny] == nil {
-			return nil
+func (ph PathHandler) Add(path string, resolver Resolver) error {
+	if !strings.Contains(path, ":") || !strings.Contains(path, "{") {
+		if ph.normalPath == nil {
+			ph.normalPath = make(map[string]Resolver)
+			ph.normalPath[path] = resolver
 		} else {
-			handler = ph.requestHandler[RequestTypeAny]
+			if _, ok := ph.normalPath[path]; ok {
+				return fmt.Errorf("path %s already exist", path)
+			} else {
+				ph.normalPath[path] = resolver
+			}
 		}
 	} else {
-		handler = ph.requestHandler[method]
+		if ph.paramPath == nil {
+			ph.paramPath = make(map[string]map[string]Resolver)
+			parts := strings.Split(path, "/")
+			for index, path := range parts {
+				if strings.Contains(path, ":") {
+					var param, paramType string
+					openCurl := strings.Index(path, "{")
+					closeCurl := strings.Index(path, "}")
+					if openCurl != -1 && closeCurl != -1 {
+						paramType = path[openCurl+1 : closeCurl]
+					} else {
+						paramType = "string"
+					}
+					param = path[1:openCurl]
+				}
+			}
+		}
+
+	}
+}
+
+func (ph PathHandler) Get(path string) Resolver {
+	if resolver, ok := ph.normalPath[path]; ok {
+		return resolver
 	}
 
-	if handler == nil {
-		return nil
-	}
+	//
 
-	return handler.getRoute(req.Path)
+	return nil
+}
+
+type Router struct {
+	handler  []Resolver
+	routeMap map[RequestType]PathHandler
+}
+
+func (r Router) Resolve(req *Request, res *Response) {
 
 }
 
-type router struct {
-	middleware []Middleware
-	handlePath pathHandler
-}
-
-func (r *router) handleMiddleware(req *Request, res *Response) {
+func (r *Router) handleMiddleware(req *Request, res *Response) {
 	if res.resolved {
 		fmt.Println("warn: the response is resolve => please use return on next and res.send function call")
 		return
 	}
-	if len(r.middleware) > 0 {
-		curFunc := r.middleware[0]
+	if len(r.handler) > 0 {
+		curFunc := r.handler[0]
 		curIndex := 0
 		var next func()
 		next = func() {
@@ -81,83 +82,40 @@ func (r *router) handleMiddleware(req *Request, res *Response) {
 				return
 			}
 			curIndex++
-			if curIndex < len(r.middleware) {
-				nextFunc := r.middleware[curIndex]
-				nextFunc(req, res, next)
+			if curIndex < len(r.handler) {
+				nextFunc := r.handler[curIndex]
+				req.Next = &next
+				nextFunc.Resolve(req, res)
 			} else {
-				r.resolve(req, res)
+				r.Resolve(req, res)
 			}
 		}
-		curFunc(req, res, next)
+		curFunc.Resolve(req, res)
 	}
 }
 
-func (r *router) resolve(req *Request, res *Response) {
-	r.handleMiddleware(req, res)
-
-	if res.resolved {
-		return
-	}
+func (r *Router) Use(path string, handler ...Resolver) {
 
 }
 
-//func (hwm *handlerWithMiddleware) resolve(req *Request, res *Response) {
-//	if res.resolved {
-//		fmt.Println("warn: the response is resolve => please use return on next and res.send function call")
-//		return
-//	}
-//	if len(hwm.middleware) > 0 {
-//		curFunc := hwm.middleware[0]
-//		curIndex := 0
-//		var next func()
-//		next = func() {
-//			if res.resolved {
-//				fmt.Println("warn: the response is resolve => please use return on next and res.send function call")
-//				return
-//			}
-//			curIndex++
-//			if curIndex < len(hwm.middleware) {
-//				nextFunc := hwm.middleware[curIndex]
-//				nextFunc(req, res, next)
-//			} else {
-//				hwm.handler(req, res)
-//			}
-//		}
-//		curFunc(req, res, next)
-//	} else {
-//		hwm.handler(req, res)
-//	}
-//}
-
-func (r *router) Use(path string, middleware []Middleware, router router) {
-	if r.handlePath[path].routeHandler != nil {
-		fmt.Println("warn: the path already have a router")
-		return
-	}
-	r.handlePath[path] = pathHandler{
-		routeHandler: &router,
-	}
-}
-
-func (r *router) Get(path string, middlewares []Middleware, handler Handler) {
-	if r.handlePath[path].requestHandler["GET"] != nil {
-		fmt.Println("warn: the path already have a handler")
-		return
-	}
-	r.handlePath[path].requestHandler["GET"] = handler
-}
-
-func (r *router) Post(path string, middlewares []Middleware, handler Handler) {
+func (r *Router) Get(path string, handler ...Handler) {
 
 }
 
-func (r *router) Delete(path string, middlewares []Middleware, handler Handler) {
+func (r *Router) Post(path string, handler ...Handler) {
 
 }
 
-func (r *router) Put(path string, middlewares []Middleware, handler Handler) {
+func (r *Router) Delete(path string, handler ...Handler) {
 
 }
-func (r *router) Patch(path string, middlewares []Middleware, handler Handler) {
+
+func (r *Router) Put(path string, handler ...Handler) {
 
 }
+func (r *Router) Patch(path string, handler ...Handler) {
+
+}
+
+
+*/

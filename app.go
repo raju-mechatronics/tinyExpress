@@ -4,32 +4,20 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"time"
 )
 
 type Application struct {
-	router
-	server  *http.Server
-	config  AppConfig
-	handler http.Handler
+	//Router
+	server              *http.Server
+	config              AppConfig
+	handler             http.Handler
+	beforeSendListeners []func(req *Request, res *Response)
 }
 
 func App(config ...AppConfig) *Application {
 	serverConfig := AppConfig{
 		Port: 4000,
 		Host: "127.0.0.1",
-		AllowedMethod: []RequestType{
-			RequestTypeAny,
-			RequestTypeConnect,
-			RequestTypeDelete,
-			RequestTypeGet,
-			RequestTypeHead,
-			RequestTypeOptions,
-			RequestTypePatch,
-			RequestTypePost,
-			RequestTypePut,
-			RequestTypeTrace,
-		},
 	}
 
 	if len(config) > 0 {
@@ -46,14 +34,12 @@ func App(config ...AppConfig) *Application {
 
 	fmt.Println(serverConfig)
 
-	app := &Application{
+	var app *Application
+	app = &Application{
 		config: serverConfig,
 		server: &http.Server{
 			Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				fmt.Println("Processing request", r.URL.Path, " ", time.Now())
-				time.Sleep(5 * time.Second)
-				fmt.Println("Processing request", r.URL.Path, " ", time.Now())
-				fmt.Fprintln(w, "Response for", r.URL.Path)
+				handle(app, w, r)
 			}),
 		},
 	}
@@ -89,4 +75,45 @@ func (app *Application) GetConfig() *AppConfig {
 
 func (app *Application) GetHandler() *http.Handler {
 	return &app.handler
+}
+
+func (app *Application) OnBeforeSend(listener func(req *Request, res *Response)) {
+	app.beforeSendListeners = append(app.beforeSendListeners, listener)
+}
+
+func (app *Application) BeforeSend(req *Request, res *Response) {
+	for _, listener := range app.beforeSendListeners {
+		listener(req, res)
+	}
+}
+
+func handle(app *Application, w http.ResponseWriter, r *http.Request) {
+	req, err := NewRequest(r)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	res := NewResponse(&w)
+
+	//app.Resolve(req, res)
+
+	app.BeforeSend(req, res)
+
+	// send the response
+	if !res.resolved {
+		http.Error(w, "Not Found", http.StatusNotFound)
+		return
+	}
+
+	// write the response header
+	for key, values := range *res.header {
+		for _, value := range values {
+			w.Header().Add(key, value)
+		}
+	}
+
+	// write the response bod
+	w.Write(*res.body)
+
 }
