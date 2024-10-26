@@ -1,5 +1,9 @@
 package te
 
+import (
+	"fmt"
+)
+
 /*
 	ParamPath: /user/:id{int}/
 	ParamPath: /user/:id{string}
@@ -13,39 +17,8 @@ type PathHandler struct {
 	paramPath  map[string]map[string]Resolver
 }
 
-/*
 func (ph PathHandler) Add(path string, resolver Resolver) error {
-	if !strings.Contains(path, ":") || !strings.Contains(path, "{") {
-		if ph.normalPath == nil {
-			ph.normalPath = make(map[string]Resolver)
-			ph.normalPath[path] = resolver
-		} else {
-			if _, ok := ph.normalPath[path]; ok {
-				return fmt.Errorf("path %s already exist", path)
-			} else {
-				ph.normalPath[path] = resolver
-			}
-		}
-	} else {
-		if ph.paramPath == nil {
-			ph.paramPath = make(map[string]map[string]Resolver)
-			parts := strings.Split(path, "/")
-			for index, path := range parts {
-				if strings.Contains(path, ":") {
-					var param, paramType string
-					openCurl := strings.Index(path, "{")
-					closeCurl := strings.Index(path, "}")
-					if openCurl != -1 && closeCurl != -1 {
-						paramType = path[openCurl+1 : closeCurl]
-					} else {
-						paramType = "string"
-					}
-					param = path[1:openCurl]
-				}
-			}
-		}
-
-	}
+	return fmt.Errorf("not implemented")
 }
 
 func (ph PathHandler) Get(path string) Resolver {
@@ -116,6 +89,3 @@ func (r *Router) Put(path string, handler ...Handler) {
 func (r *Router) Patch(path string, handler ...Handler) {
 
 }
-
-
-*/
