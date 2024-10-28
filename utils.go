@@ -5,9 +5,14 @@ import (
 	"strings"
 )
 
-func extractParamsFromStr(re *regexp.Regexp, str string) (string, map[string]string) {
+func extractParamsFromStr(re *regexp.Regexp, str string) (bool, string, string, map[string]string) {
 	var params map[string]string = nil
 	matches := re.FindStringSubmatch(str)
+
+	if matches == nil {
+		return false, "", str, params
+	}
+
 	names := re.SubexpNames()
 	for i, name := range names {
 		if i != 0 && name != "" {
@@ -17,7 +22,8 @@ func extractParamsFromStr(re *regexp.Regexp, str string) (string, map[string]str
 			params[name] = matches[i]
 		}
 	}
-	return matches[0], params
+	rest := strings.TrimPrefix(str, matches[0])
+	return true, matches[0], rest, params
 }
 
 /*
@@ -25,10 +31,10 @@ a function that takes the path and returns the regular expression pattern
 
 Example:
 
-	/user/:id{int}/ => ^/user/(?P<id>\d+)/
-	/user/:id{string} => ^/user/(?P<id>\w+)/
-	/user/:id{float} => ^/user/(?P<id>\d+\.\d+)/
-	/user/{regexp} => ^/user/(regexp)/ [Not yet completed]
+	/user/:id{int}/ => ^/user/(?P<id>\d+)
+	/user/:id{string} => ^/user/(?P<id>\w+)
+	/user/:id{float} => ^/user/(?P<id>\d+\.\d+)
+	/user/{regexp} => ^/user/(regexp) [Not yet completed]
 */
 func makeRegExpPattern(path string) *regexp.Regexp {
 	parts := strings.Split(path, "/")
@@ -45,7 +51,7 @@ func makeRegExpPattern(path string) *regexp.Regexp {
 			continue
 		}
 		if part[0] != ':' {
-			regExpString += "(" + part + ")" + "/"
+			regExpString += "/" + "(" + part + ")"
 		} else if part[0] == ':' {
 			paramType := ""
 			paramName := ""
@@ -64,18 +70,17 @@ func makeRegExpPattern(path string) *regexp.Regexp {
 			}
 
 			if paramType == "int" {
-				regExpString += "(?P<" + paramName + ">" + intRegExp + ")/"
+				regExpString += "/(?P<" + paramName + ">" + intRegExp + ")"
 			} else if paramType == "float" {
-				regExpString += "(?P<" + paramName + ">" + floatRegExp + ")/"
+				regExpString += "/(?P<" + paramName + ">" + floatRegExp + ")"
 			} else if paramType == "string" {
-				regExpString += "(?P<" + paramName + ">" + stringRegExp + ")/"
+				regExpString += "/(?P<" + paramName + ">" + stringRegExp + ")"
 			} else if paramType == "regexp" {
-				regExpString += "(" + paramName + ")/"
+				regExpString += "/(" + paramName + ")"
 			}
 		}
 	}
 
 	regExpString = strings.TrimSuffix(regExpString, "/")
-	rexp := regexp.MustCompile(regExpString)
-	return rexp
+	return regexp.MustCompile(regExpString)
 }

@@ -1,19 +1,19 @@
 package te
 
 // Request Types
-type RequestType = string
+type RequestMethod = string
 
 const (
-	RequestTypeGet     RequestType = "GET"
-	RequestTypePost    RequestType = "POST"
-	RequestTypeDelete  RequestType = "DELETE"
-	RequestTypePut     RequestType = "PUT"
-	RequestTypePatch   RequestType = "PATCH"
-	RequestTypeHead    RequestType = "HEAD"
-	RequestTypeOptions RequestType = "OPTIONS"
-	RequestTypeConnect RequestType = "CONNECT"
-	RequestTypeTrace   RequestType = "TRACE"
-	RequestTypeAny     RequestType = "*"
+	RequestTypeGet     RequestMethod = "GET"
+	RequestTypePost    RequestMethod = "POST"
+	RequestTypeDelete  RequestMethod = "DELETE"
+	RequestTypePut     RequestMethod = "PUT"
+	RequestTypePatch   RequestMethod = "PATCH"
+	RequestTypeHead    RequestMethod = "HEAD"
+	RequestTypeOptions RequestMethod = "OPTIONS"
+	RequestTypeConnect RequestMethod = "CONNECT"
+	RequestTypeTrace   RequestMethod = "TRACE"
+	RequestTypeAny     RequestMethod = "*"
 )
 
 const (
