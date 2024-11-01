@@ -45,8 +45,11 @@ func (r *RouteUnit) Resolve(req *Request, res *Response) {
 		req.Next = &next
 		curFunc.Resolve(req, res)
 	}
+
 }
 
+// return if the path is matched with the route path, the matched part, the rest of the path, and the parameters
 func (r *RouteUnit) match(path string) (bool, string, string, map[string]string) {
+
 	return extractParamsFromStr(r.path, path)
 }

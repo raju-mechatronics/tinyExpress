@@ -5,6 +5,7 @@ import (
 	"strings"
 )
 
+// return if the path is matched with the route path, the matched part, the rest of the path, and the parameters
 func extractParamsFromStr(re *regexp.Regexp, str string) (bool, string, string, map[string]string) {
 	var params map[string]string = nil
 	matches := re.FindStringSubmatch(str)

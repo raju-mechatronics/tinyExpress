@@ -5,45 +5,15 @@ import (
 )
 
 type Router struct {
-	routes  []*RouteUnit
 	handler []Resolver
 }
 
-func (r *Router) addRoute(route *RouteUnit) {
-	r.routes = append(r.routes, route)
+func convertToResolver[T Resolver](h T) Resolver {
+	return h
 }
 
-func (r *Router) addHandler(handler Resolver) {
-	r.handler = append(r.handler, handler)
-}
-
-func (r *Router) Resolve(req *Request, res *Response) {
-	if res.resolved {
-		fmt.Println("warn: the response is resolve => please use return on next and res.send function call")
-		return
-	}
-	r.handleMiddleware(req, res)
-	if res.resolved {
-		return
-	}
-
-	currentPath := req.Path
-	for _, route := range r.routes {
-		matched, matchedPath, restPath, params := route.match(currentPath)
-		if !matched {
-			continue
-		} else {
-			if req.Params == nil {
-				req.Params = make(map[string]string)
-			}
-			for k, v := range params {
-				req.Params[k] = v
-			}
-			req.CurrentPath = matchedPath
-			req.Path = restPath
-		}
-
-	}
+func (r *Router) add(handler ...Resolver) {
+	r.handler = append(r.handler, handler...)
 }
 
 func (r *Router) handleMiddleware(req *Request, res *Response) {
@@ -73,6 +43,17 @@ func (r *Router) handleMiddleware(req *Request, res *Response) {
 	}
 }
 
+func (r *Router) Resolve(req *Request, res *Response) {
+	if res.resolved {
+		fmt.Println("warn: the response is resolve => please use return on next and res.send function call")
+		return
+	}
+	r.handleMiddleware(req, res)
+	if res.resolved {
+		return
+	}
+}
+
 func (r *Router) Use(handler ...Resolver) {
 	r.handler = append(r.handler, handler...)
 }
@@ -80,6 +61,10 @@ func (r *Router) Use(handler ...Resolver) {
 func (r *Router) UsePath(path string, handler ...Resolver) {
 	route := Route(path, RequestTypeAny, handler...)
 	r.addRoute(route)
+}
+
+func (r *Router) UseMiddleWare(handler ...Handler) {
+	r.addHandler(handler...)
 }
 
 func (r *Router) Get(path string, handler ...Handler) {
