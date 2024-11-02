@@ -1,6 +1,8 @@
 package te
 
-import "regexp"
+import (
+	"regexp"
+)
 
 type RouteUnit struct {
 	path     *regexp.Regexp
@@ -23,10 +25,31 @@ func (r *RouteUnit) AddResolver(resolver Resolver) {
 
 func (r *RouteUnit) Resolve(req *Request, res *Response) {
 
-	//handle middleware
 	if res.resolved {
 		return
 	}
+
+	if r.method != RequestTypeAny && r.method != req.Method {
+		return
+	}
+
+	matched, matchedPart, rest, params := extractParamsFromStr(r.path, req.CurrentPath)
+
+	if !matched {
+		return
+	}
+
+	//merge the params
+	if req.Params == nil {
+		req.Params = make(map[string]string)
+	}
+	for k, v := range params {
+		req.Params[k] = v
+	}
+
+	req.CurrentPath = matchedPart
+	req.NextPath = rest
+
 	if len(r.resolver) > 0 {
 		curFunc := r.resolver[0]
 		curIndex := 0
@@ -46,10 +69,4 @@ func (r *RouteUnit) Resolve(req *Request, res *Response) {
 		curFunc.Resolve(req, res)
 	}
 
-}
-
-// return if the path is matched with the route path, the matched part, the rest of the path, and the parameters
-func (r *RouteUnit) match(path string) (bool, string, string, map[string]string) {
-
-	return extractParamsFromStr(r.path, path)
 }

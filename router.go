@@ -8,8 +8,12 @@ type Router struct {
 	handler []Resolver
 }
 
-func convertToResolver[T Resolver](h T) Resolver {
-	return h
+func convertToResolver[T Resolver](h ...T) []Resolver {
+	resolvers := make([]Resolver, len(h))
+	for i, handler := range h {
+		resolvers[i] = handler
+	}
+	return resolvers
 }
 
 func (r *Router) add(handler ...Resolver) {
@@ -18,7 +22,7 @@ func (r *Router) add(handler ...Resolver) {
 
 func (r *Router) handleMiddleware(req *Request, res *Response) {
 	if res.resolved {
-		fmt.Println("warn: the response is resolve => please use return on next and res.send function call")
+		fmt.Println("warn: the response is resolve => please use return on Next and res.send function call")
 		return
 	}
 	if len(r.handler) > 0 {
@@ -27,7 +31,7 @@ func (r *Router) handleMiddleware(req *Request, res *Response) {
 		var next func()
 		next = func() {
 			if res.resolved {
-				fmt.Println("warn: the response is resolve => please use return on next and res.send function call")
+				fmt.Println("warn: the response is resolve => please use return on Next and res.send function call")
 				return
 			}
 			curIndex++
@@ -45,7 +49,7 @@ func (r *Router) handleMiddleware(req *Request, res *Response) {
 
 func (r *Router) Resolve(req *Request, res *Response) {
 	if res.resolved {
-		fmt.Println("warn: the response is resolve => please use return on next and res.send function call")
+		fmt.Println("warn: the response is resolve => please use return on Next and res.send function call")
 		return
 	}
 	r.handleMiddleware(req, res)
@@ -60,110 +64,62 @@ func (r *Router) Use(handler ...Resolver) {
 
 func (r *Router) UsePath(path string, handler ...Resolver) {
 	route := Route(path, RequestTypeAny, handler...)
-	r.addRoute(route)
+	r.add(route)
 }
 
 func (r *Router) UseMiddleWare(handler ...Handler) {
-	r.addHandler(handler...)
+	r.add(convertToResolver(handler...)...)
 }
 
-func (r *Router) Get(path string, handler ...Handler) {
-	//convert handler to resolver
-	resolvers := make([]Resolver, len(handler))
-	for i, h := range handler {
-		resolvers[i] = h
-	}
+//
+// handle the request with request handler
 
-	route := Route(path, RequestTypeGet, resolvers...)
-	r.addRoute(route)
+func (r *Router) Get(path string, handler ...Handler) {
+	route := Route(path, RequestTypeGet, convertToResolver(handler...)...)
+	r.add(route)
 }
 
 func (r *Router) Post(path string, handler ...Handler) {
-	resolvers := make([]Resolver, len(handler))
-	for i, h := range handler {
-		resolvers[i] = h
-	}
-
-	route := Route(path, RequestTypePost, resolvers...)
-	r.addRoute(route)
+	route := Route(path, RequestTypePost, convertToResolver(handler...)...)
+	r.add(route)
 }
 
 func (r *Router) Delete(path string, handler ...Handler) {
-	resolvers := make([]Resolver, len(handler))
-	for i, h := range handler {
-		resolvers[i] = h
-	}
-
-	route := Route(path, RequestTypeDelete, resolvers...)
-	r.addRoute(route)
-
+	route := Route(path, RequestTypeDelete, convertToResolver(handler...)...)
+	r.add(route)
 }
 
 func (r *Router) Put(path string, handler ...Handler) {
-	resolvers := make([]Resolver, len(handler))
-	for i, h := range handler {
-		resolvers[i] = h
-	}
-
-	route := Route(path, RequestTypePut, resolvers...)
-	r.addRoute(route)
+	route := Route(path, RequestTypePut, convertToResolver(handler...)...)
+	r.add(route)
 }
-func (r *Router) Patch(path string, handler ...Handler) {
-	resolvers := make([]Resolver, len(handler))
-	for i, h := range handler {
-		resolvers[i] = h
-	}
 
-	route := Route(path, RequestTypePatch, resolvers...)
-	r.addRoute(route)
+func (r *Router) Patch(path string, handler ...Handler) {
+	route := Route(path, RequestTypePatch, convertToResolver(handler...)...)
+	r.add(route)
 }
 
 func (r *Router) Head(path string, handler ...Handler) {
-	resolvers := make([]Resolver, len(handler))
-	for i, h := range handler {
-		resolvers[i] = h
-	}
-
-	route := Route(path, RequestTypeHead, resolvers...)
-	r.addRoute(route)
+	route := Route(path, RequestTypeHead, convertToResolver(handler...)...)
+	r.add(route)
 }
 
 func (r *Router) Options(path string, handler ...Handler) {
-	resolvers := make([]Resolver, len(handler))
-	for i, h := range handler {
-		resolvers[i] = h
-	}
-
-	route := Route(path, RequestTypeOptions, resolvers...)
-	r.addRoute(route)
+	route := Route(path, RequestTypeOptions, convertToResolver(handler...)...)
+	r.add(route)
 }
 
 func (r *Router) Connect(path string, handler ...Handler) {
-	resolvers := make([]Resolver, len(handler))
-	for i, h := range handler {
-		resolvers[i] = h
-	}
-
-	route := Route(path, RequestTypeConnect, resolvers...)
-	r.addRoute(route)
+	route := Route(path, RequestTypeConnect, convertToResolver(handler...)...)
+	r.add(route)
 }
 
 func (r *Router) Trace(path string, handler ...Handler) {
-	resolvers := make([]Resolver, len(handler))
-	for i, h := range handler {
-		resolvers[i] = h
-	}
-
-	route := Route(path, RequestTypeTrace, resolvers...)
-	r.addRoute(route)
+	route := Route(path, RequestTypeTrace, convertToResolver(handler...)...)
+	r.add(route)
 }
 
 func (r *Router) Any(path string, handler ...Handler) {
-	resolvers := make([]Resolver, len(handler))
-	for i, h := range handler {
-		resolvers[i] = h
-	}
-
-	route := Route(path, RequestTypeAny, resolvers...)
-	r.addRoute(route)
+	route := Route(path, RequestTypeAny, convertToResolver(handler...)...)
+	r.add(route)
 }
