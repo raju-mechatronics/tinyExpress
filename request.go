@@ -34,12 +34,13 @@ type Request struct {
 	Cookies []*http.Cookie
 
 	// for middle ware support
-	Next               *func()
-	applicationContext map[string]interface{}
+	Next *func()
+	// middleware can store data here to pass to the next middleware or handler or route
+	ProcessMap map[string]interface{}
 }
 
-// NewRequest initializes a new Request object
-func NewRequest(r *http.Request) (*Request, error) {
+// newRequest initializes a new Request object
+func newRequest(r *http.Request) (*Request, error) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		return nil, err
@@ -47,17 +48,17 @@ func NewRequest(r *http.Request) (*Request, error) {
 	cookies := r.Cookies()
 
 	req := &Request{
-		Request:            r,
-		OriginalURL:        r.URL.String(),
-		Path:               r.URL.Path,
-		NextPath:           r.URL.Path,
-		CurrentPath:        "",
-		Body:               body,
-		Params:             nil,
-		Query:              r.URL.Query(),
-		Cookies:            cookies,
-		Next:               nil,
-		applicationContext: nil,
+		Request:     r,
+		OriginalURL: r.URL.String(),
+		Path:        r.URL.Path,
+		NextPath:    r.URL.Path,
+		CurrentPath: "",
+		Body:        body,
+		Params:      nil,
+		Query:       r.URL.Query(),
+		Cookies:     cookies,
+		Next:        nil,
+		ProcessMap:  make(map[string]interface{}),
 	}
 
 	return req, nil
@@ -72,6 +73,11 @@ func (req *Request) GetParam(name string) string {
 // GetQuery retrieves a query string parameter by name
 func (req *Request) GetQuery(name string) string {
 	return req.Query.Get(name)
+}
+
+// GetHeader retrieves a Header by name
+func (req *Request) GetHeader(name string) string {
+	return req.Header.Get(name)
 }
 
 // GetCookie retrieves a cookie by name

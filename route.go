@@ -19,7 +19,7 @@ func Route(path string, method RequestMethod, resolvers ...Resolver) *RouteUnit 
 	}
 }
 
-func (r *RouteUnit) AddResolver(resolver Resolver) {
+func (r *RouteUnit) addResolver(resolver Resolver) {
 	r.resolver = append(r.resolver, resolver)
 }
 

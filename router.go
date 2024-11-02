@@ -20,41 +20,17 @@ func (r *Router) add(handler ...Resolver) {
 	r.handler = append(r.handler, handler...)
 }
 
-func (r *Router) handleMiddleware(req *Request, res *Response) {
-	if res.resolved {
-		fmt.Println("warn: the response is resolve => please use return on Next and res.send function call")
-		return
-	}
-	if len(r.handler) > 0 {
-		curFunc := r.handler[0]
-		curIndex := 0
-		var next func()
-		next = func() {
-			if res.resolved {
-				fmt.Println("warn: the response is resolve => please use return on Next and res.send function call")
-				return
-			}
-			curIndex++
-			if curIndex < len(r.handler) {
-				nextFunc := r.handler[curIndex]
-				req.Next = &next
-				nextFunc.Resolve(req, res)
-			} else {
-				r.Resolve(req, res)
-			}
-		}
-		curFunc.Resolve(req, res)
-	}
-}
-
 func (r *Router) Resolve(req *Request, res *Response) {
 	if res.resolved {
 		fmt.Println("warn: the response is resolve => please use return on Next and res.send function call")
 		return
 	}
-	r.handleMiddleware(req, res)
-	if res.resolved {
-		return
+
+	for _, handler := range r.handler {
+		if res.resolved {
+			return
+		}
+		handler.Resolve(req, res)
 	}
 }
 

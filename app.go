@@ -88,7 +88,7 @@ func (app *Application) BeforeSend(req *Request, res *Response) {
 }
 
 func handle(app *Application, w http.ResponseWriter, r *http.Request) {
-	req, err := NewRequest(r)
+	req, err := newRequest(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -106,7 +106,7 @@ func handle(app *Application, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// write the response header
+	// write the response Header
 	for key, values := range *res.header {
 		for _, value := range values {
 			w.Header().Add(key, value)
