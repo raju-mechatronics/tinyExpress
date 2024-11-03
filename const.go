@@ -1,19 +1,19 @@
 package te
 
-// Request Types
+// Represent the request methods
 type RequestMethod = string
 
 const (
-	RequestTypeGet     RequestMethod = "GET"
-	RequestTypePost    RequestMethod = "POST"
-	RequestTypeDelete  RequestMethod = "DELETE"
-	RequestTypePut     RequestMethod = "PUT"
-	RequestTypePatch   RequestMethod = "PATCH"
-	RequestTypeHead    RequestMethod = "HEAD"
-	RequestTypeOptions RequestMethod = "OPTIONS"
-	RequestTypeConnect RequestMethod = "CONNECT"
-	RequestTypeTrace   RequestMethod = "TRACE"
-	RequestTypeAny     RequestMethod = "*"
+	RequestMethodGet     RequestMethod = "GET"
+	RequestMethodPost    RequestMethod = "POST"
+	RequestMethodDelete  RequestMethod = "DELETE"
+	RequestMethodPut     RequestMethod = "PUT"
+	RequestMethodPatch   RequestMethod = "PATCH"
+	RequestMethodHead    RequestMethod = "HEAD"
+	RequestMethodOptions RequestMethod = "OPTIONS"
+	RequestMethodConnect RequestMethod = "CONNECT"
+	RequestMethodTrace   RequestMethod = "TRACE"
+	RequestMethodAny     RequestMethod = "*"
 )
 
 // HTTP status codes as registered with IANA.

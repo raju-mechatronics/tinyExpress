@@ -39,7 +39,7 @@ func (r *Router) Use(handler ...Resolver) {
 }
 
 func (r *Router) UsePath(path string, handler ...Resolver) {
-	route := Route(path, RequestTypeAny, handler...)
+	route := Route(path, RequestMethodAny, handler...)
 	r.add(route)
 }
 
@@ -51,51 +51,51 @@ func (r *Router) UseMiddleWare(handler ...Handler) {
 // handle the request with request handler
 
 func (r *Router) Get(path string, handler ...Handler) {
-	route := Route(path, RequestTypeGet, convertToResolver(handler...)...)
+	route := Route(path, RequestMethodGet, convertToResolver(handler...)...)
 	r.add(route)
 }
 
 func (r *Router) Post(path string, handler ...Handler) {
-	route := Route(path, RequestTypePost, convertToResolver(handler...)...)
+	route := Route(path, RequestMethodPost, convertToResolver(handler...)...)
 	r.add(route)
 }
 
 func (r *Router) Delete(path string, handler ...Handler) {
-	route := Route(path, RequestTypeDelete, convertToResolver(handler...)...)
+	route := Route(path, RequestMethodDelete, convertToResolver(handler...)...)
 	r.add(route)
 }
 
 func (r *Router) Put(path string, handler ...Handler) {
-	route := Route(path, RequestTypePut, convertToResolver(handler...)...)
+	route := Route(path, RequestMethodPut, convertToResolver(handler...)...)
 	r.add(route)
 }
 
 func (r *Router) Patch(path string, handler ...Handler) {
-	route := Route(path, RequestTypePatch, convertToResolver(handler...)...)
+	route := Route(path, RequestMethodPatch, convertToResolver(handler...)...)
 	r.add(route)
 }
 
 func (r *Router) Head(path string, handler ...Handler) {
-	route := Route(path, RequestTypeHead, convertToResolver(handler...)...)
+	route := Route(path, RequestMethodHead, convertToResolver(handler...)...)
 	r.add(route)
 }
 
 func (r *Router) Options(path string, handler ...Handler) {
-	route := Route(path, RequestTypeOptions, convertToResolver(handler...)...)
+	route := Route(path, RequestMethodOptions, convertToResolver(handler...)...)
 	r.add(route)
 }
 
 func (r *Router) Connect(path string, handler ...Handler) {
-	route := Route(path, RequestTypeConnect, convertToResolver(handler...)...)
+	route := Route(path, RequestMethodConnect, convertToResolver(handler...)...)
 	r.add(route)
 }
 
 func (r *Router) Trace(path string, handler ...Handler) {
-	route := Route(path, RequestTypeTrace, convertToResolver(handler...)...)
+	route := Route(path, RequestMethodTrace, convertToResolver(handler...)...)
 	r.add(route)
 }
 
 func (r *Router) Any(path string, handler ...Handler) {
-	route := Route(path, RequestTypeAny, convertToResolver(handler...)...)
+	route := Route(path, RequestMethodAny, convertToResolver(handler...)...)
 	r.add(route)
 }

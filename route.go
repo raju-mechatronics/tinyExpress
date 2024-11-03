@@ -29,7 +29,7 @@ func (r *RouteUnit) Resolve(req *Request, res *Response) {
 		return
 	}
 
-	if r.method != RequestTypeAny && r.method != req.Method {
+	if r.method != RequestMethodAny && r.method != req.Method {
 		return
 	}
 
@@ -46,6 +46,11 @@ func (r *RouteUnit) Resolve(req *Request, res *Response) {
 	for k, v := range params {
 		req.Params[k] = v
 	}
+
+	//fail control if the path is not resolve the request
+	tempCurrentPath := req.CurrentPath
+	tempNextPath := req.NextPath
+	tempParams := req.Params
 
 	req.CurrentPath = matchedPart
 	req.NextPath = rest
@@ -69,4 +74,7 @@ func (r *RouteUnit) Resolve(req *Request, res *Response) {
 		curFunc.Resolve(req, res)
 	}
 
+	req.CurrentPath = tempCurrentPath
+	req.NextPath = tempNextPath
+	req.Params = tempParams
 }
