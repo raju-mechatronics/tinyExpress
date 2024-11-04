@@ -7,10 +7,9 @@ import (
 )
 
 type Application struct {
-	//Router
+	Router
 	server              *http.Server
 	config              AppConfig
-	handler             http.Handler
 	beforeSendListeners []func(req *Request, res *Response)
 }
 
@@ -73,10 +72,6 @@ func (app *Application) GetConfig() *AppConfig {
 	return &app.config
 }
 
-func (app *Application) GetHandler() *http.Handler {
-	return &app.handler
-}
-
 func (app *Application) OnBeforeSend(listener func(req *Request, res *Response)) {
 	app.beforeSendListeners = append(app.beforeSendListeners, listener)
 }
@@ -96,7 +91,7 @@ func handle(app *Application, w http.ResponseWriter, r *http.Request) {
 
 	res := NewResponse(&w)
 
-	//app.Resolve(req, res)
+	app.Resolve(req, res)
 
 	app.BeforeSend(req, res)
 
@@ -107,13 +102,13 @@ func handle(app *Application, w http.ResponseWriter, r *http.Request) {
 	}
 
 	// write the response Header
-	for key, values := range *res.header {
+	for key, values := range res.headers {
 		for _, value := range values {
 			w.Header().Add(key, value)
 		}
 	}
 
 	// write the response bod
-	w.Write(*res.body)
+	w.Write(res.body)
 
 }

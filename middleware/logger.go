@@ -14,8 +14,8 @@ type LogOption struct {
 }
 
 // Log the details of request
-func teLog(option *LogOption) te.Middleware {
-	return func(req *te.Request, res *te.Response, next func()) {
+func TeLog(option LogOption) te.Handler {
+	return func(req *te.Request, res *te.Response) {
 		//log the request
 		log := ""
 
@@ -35,6 +35,9 @@ func teLog(option *LogOption) te.Middleware {
 			log += "Method: " + req.Method + " "
 		}
 
-		next()
+		if req.Next != nil {
+			next := *req.Next
+			next()
+		}
 	}
 }

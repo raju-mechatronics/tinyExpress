@@ -26,7 +26,7 @@ func TestExtractParamsFromRoute(t *testing.T) {
 	for i, p := range path {
 		re := regexp.MustCompile(regExpList[i])
 		fmt.Println(re.FindStringSubmatch(p))
-		match, params := extractParamsFromStr(re, p)
+		match, params, _, _ := extractParamsFromStr(re, p)
 		fmt.Println(match, params)
 	}
 }

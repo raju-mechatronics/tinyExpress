@@ -2,33 +2,26 @@ package te
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
-)
-
-type ResponseEventType string
-
-const (
-	BeforeSend    ResponseEventType = "beforeSend"
-	End           ResponseEventType = "finish"
-	ErrorResponse ResponseEventType = "error"
+	"os"
 )
 
 type Response struct {
-	writer         http.ResponseWriter
-	status         int
-	headers        http.Header
-	body           []byte
-	file           string
-	cookies        []*http.Cookie
-	resolved       bool
-	eventListeners map[ResponseEventType][]func(req *Request, res *Response)
+	writer   http.ResponseWriter
+	status   int
+	headers  http.Header
+	body     []byte
+	file     string
+	cookies  []*http.Cookie
+	resolved bool
 }
 
 // NewResponse creates a new Response instance.
-func NewResponse(w http.ResponseWriter) *Response {
+func NewResponse(w *http.ResponseWriter) *Response {
 	return &Response{
-		writer:  w,
+		writer:  *w,
 		headers: make(http.Header),
 	}
 }
@@ -64,7 +57,16 @@ func (res *Response) SetStatusCode(code int) *Response {
 }
 
 func (res *Response) Pipe(reader *io.Reader) {
-	io.Copy(res.writer, *reader)
+	if res.resolved {
+		fmt.Println("Response already resolved")
+		return
+	}
+	_, err := io.Copy(res.writer, *reader)
+	if err != nil {
+		fmt.Println(err)
+		// send error response
+		res.SetStatusCode(StatusInternalServerError).SetBody([]byte(err.Error())).send()
+	}
 	res.resolved = true
 }
 
@@ -72,45 +74,105 @@ func (res *Response) GetContentType() string {
 	return res.headers.Get("Content-Type")
 }
 
+var i = 0
+
 // Helper methods for common response types
 func (res *Response) SendString(str string) {
+	fmt.Println("SendString", i)
+	i++
+	if res.resolved {
+		fmt.Println("Response already resolved")
+		return
+	}
 	if res.GetContentType() == "" {
 		res.SetContentType("text/plain").SetBody([]byte(str)).send()
+		return
 	} else {
 		res.SetBody([]byte(str)).send()
+		return
 	}
 }
 
 func (res *Response) SendBytes(bytes []byte) {
+	if res.resolved {
+		fmt.Println("Response already resolved")
+		return
+	}
+	//if content type is not set, then detect it
+	if res.GetContentType() == "" {
+		res.SetContentType(http.DetectContentType(bytes))
+	}
 	res.SetBody(bytes).send()
 }
 
 func (res *Response) SendHTML(html string) {
+	if res.resolved {
+		fmt.Println("Response already resolved")
+		return
+	}
 	res.SetContentType("text/html").SetBody([]byte(html)).send()
 }
 
 func (res *Response) SendText(text string) {
+	if res.resolved {
+		fmt.Println("Response already resolved")
+		return
+	}
 	res.SetContentType("text/plain").SetBody([]byte(text)).send()
 }
 
-func (res *Response) SendJSON(data interface{}) error {
+func (res *Response) SendJSON(data interface{}) {
+	if res.resolved {
+		fmt.Println("Response already resolved")
+	}
+	//check if the data is string
+	if _, ok := data.(string); ok {
+		res.SetContentType("application/json").SetBody([]byte(data.(string))).send()
+		return
+	}
+
 	dataBytes, err := json.Marshal(data)
 	if err != nil {
 		// Send an internal server error with the error message
 		res.SetStatusCode(StatusInternalServerError).SetContentType("text/plain").SetBody([]byte(err.Error()))
 		res.send()
-		return err
+
 	}
 	res.SetContentType("application/json").SetBody(dataBytes).send()
-	return nil
 }
 
-func (res *Response) SendFile(path string) error {
-
+func (res *Response) SendFile(path string) {
+	if res.resolved {
+		fmt.Println("Response already resolved")
+		return
+	}
+	// read the file bytes, set it to the body and send it
+	file, err := os.Open(path)
+	if err != nil {
+		res.SetStatusCode(StatusNotFound).send()
+		return
+	}
+	defer file.Close()
+	fileInfo, _ := file.Stat()
+	fileSize := fileInfo.Size()
+	bytes := make([]byte, fileSize)
+	_, err = file.Read(bytes)
+	if err != nil {
+		res.SetStatusCode(StatusInternalServerError).send()
+		return
+	}
+	// get content type
+	contentType := http.DetectContentType(bytes)
+	res.SetContentType(contentType).SetBody(bytes).send()
 }
 
 // Send the response to the client
 func (res *Response) send() {
+	if res.resolved {
+		fmt.Println("Response already resolved")
+		return
+	}
+	res.resolved = true
 	// Set status code
 	if res.status != 0 {
 		res.writer.WriteHeader(res.status)
@@ -132,8 +194,6 @@ func (res *Response) send() {
 	if len(res.body) > 0 {
 		res.writer.Write(res.body)
 	}
-
-	res.resolved = true
 }
 
 // Check if the response has been resolved
@@ -146,12 +206,4 @@ func (res *Response) Redirect(url string, statusCode int) {
 	res.SetStatusCode(statusCode)
 	http.Redirect(res.writer, &http.Request{}, url, statusCode)
 	res.resolved = true
-}
-
-// AddEventListener adds a listener for a specific event type
-func (res *Response) On(event ResponseEventType, listener func(req *Request, res *Response)) {
-	if res.eventListeners == nil {
-		res.eventListeners = make(map[ResponseEventType][]func(req *Request, res *Response))
-	}
-	res.eventListeners[event] = append(res.eventListeners[event], listener)
 }
